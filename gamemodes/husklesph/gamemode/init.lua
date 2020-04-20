@@ -58,7 +58,6 @@ function GM:Initialize()
 	self.RoundWaitForPlayers = CurTime()
 	self.DeathRagdolls = {}
 	self:LoadMapList()
-	self:LoadBannedModels()
 	self:StartAutoTauntTimer()
 end
 

@@ -1,25 +1,22 @@
--- This file provides the functionality for accessing the banned models
--- menu. It is used locally to determine if a model is viable (aka
--- whether or not it gets an outline when moused over).
+-- This file provides the functionality for creating and accessing the banned models
+-- menu. It is used locally to determine if a model is viable (aka whether or not it
+-- gets an outline when moused over).
 
-GM.BannedModels = {} -- This is used as a hash table where the key is the model string and the value is true.
+-- GM.BannedModels is used as a hash table where the key is the model string and the value is true.
+GM.BannedModels = {}
 local menu
 
 function GM:IsModelBanned(model)
 	return self.BannedModels[model] == true
 end
 
-function GM:AddBannedModel(model)
-	if self.BannedModels[model] == true then return end
-
-	self.BannedModels[model] = true
+local function addBannedModel(model)
+	GAMEMODE.BannedModels[model] = true
 	menu.AddModel(model)
 end
 
-function GM:RemoveBannedModel(model)
-	if self.BannedModels[model] != true then return end
-
-	self.BannedModels[model] = nil
+local function removeBannedModel(model)
+	GAMEMODE.BannedModels[model] = nil
 	menu.RemoveModel(model)
 end
 
@@ -28,27 +25,23 @@ net.Receive("ph_bannedmodels_getall", function(len)
 
 	local model = net.ReadString()
 	while model != "" do
-		GAMEMODE:AddBannedModel(model)
+		addBannedModel(model)
 		model = net.ReadString()
 	end
 end)
 
 net.Receive("ph_bannedmodels_add", function(len)
 	local model = net.ReadString()
-	GAMEMODE:AddBannedModel(model)
+	addBannedModel(model)
 end)
 
 net.Receive("ph_bannedmodels_remove", function(len)
 	local model = net.ReadString()
-	GAMEMODE:RemoveBannedModel(model)
-end)
-
-concommand.Add("ph_bannedmodels_menu", function(client)
-	menu:SetVisible(true)
+	removeBannedModel(model)
 end)
 
 -- This is all the code to create the banned models menu.
-function GM:CreateBannedModelsMenu()
+local function createBannedModelsMenu()
 	-- The main window that will contain all of the functionality for display, adding, and
 	-- removing banned models.
 	menu = vgui.Create("DFrame")
@@ -171,3 +164,13 @@ function GM:CreateBannedModelsMenu()
 		end
 	end
 end
+
+concommand.Add("ph_bannedmodels_menu", function(client)
+	if !IsValid(menu) then
+		createBannedModelsMenu()
+		net.Start("ph_bannedmodels_getall")
+		net.SendToServer()
+	end
+
+	menu:SetVisible(true)
+end)
